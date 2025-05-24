@@ -5,3 +5,5 @@ numpy>=1.26.4
 matplotlib>=3.8.4
 cvxpy>=1.4.1
 seaborn>=0.13.2
+dash>=2.14.2
+dash-bootstrap-components>=1.5.0
