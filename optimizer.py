@@ -3,7 +3,7 @@ import cvxpy as cp
 
 def optimize_portfolio(returns, risk_free_rate=0.0, method="sharpe"):
     mu = returns.mean().values
-    Sigma = returns.cov().values
+    Sigma = 0.5 * (returns.cov().values + returns.cov().values.T)  # ensure symmetry
     n = len(mu)
 
     w = cp.Variable(n)
@@ -13,7 +13,6 @@ def optimize_portfolio(returns, risk_free_rate=0.0, method="sharpe"):
     portfolio_variance = cp.quad_form(w, Sigma)
 
     if method == "sharpe":
-        # Reformulate: Maximize (return - rf) with variance as constraint
         target_vol = cp.Parameter(nonneg=True, value=1.0)
         objective = cp.Maximize(portfolio_return - risk_free_rate)
         constraints.append(portfolio_variance <= target_vol**2)
