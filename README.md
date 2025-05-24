@@ -1,6 +1,6 @@
 # Portfolio Optimization Dashboard
 
-This project is a simple **Portfolio Optimization Dashboard** built using Python and Streamlit. It allows users to:
+This project is a simple **Portfolio Optimization Dashboard** built using Python and Streamlit (app_dash.py uses dash). It allows users to:
 
 - Select a set of stocks
 - Fetch historical data from Yahoo Finance
