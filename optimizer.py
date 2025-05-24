@@ -1,29 +1,38 @@
 import numpy as np
-import cvxpy as cp
+from scipy.optimize import minimize
 
 def optimize_portfolio(returns, risk_free_rate=0.0, method="sharpe"):
-    mu = returns.mean().values
-    Sigma = 0.5 * (returns.cov().values + returns.cov().values.T)  # ensure symmetry
+    mu = returns.mean().values  # Expected daily returns
+    Sigma = returns.cov().values
     n = len(mu)
 
-    w = cp.Variable(n)
-    constraints = [cp.sum(w) == 1, w >= 0]
+    # Initial guess: equally weighted portfolio
+    x0 = np.repeat(1/n, n)
 
-    portfolio_return = mu @ w
-    portfolio_variance = cp.quad_form(w, Sigma)
+    # Constraint: sum of weights = 1
+    cons = {"type": "eq", "fun": lambda w: np.sum(w) - 1}
+
+    # Bounds: long-only (0 ≤ w_i ≤ 1)
+    bounds = [(0, 1) for _ in range(n)]
+
+    if method == "equal":
+        return x0
+
+    if method == "min_vol":
+        # Minimize portfolio standard deviation
+        def portfolio_volatility(w):
+            return np.sqrt(w.T @ Sigma @ w)
+        result = minimize(portfolio_volatility, x0, bounds=bounds, constraints=[cons])
+        return result.x
 
     if method == "sharpe":
-        target_vol = cp.Parameter(nonneg=True, value=1.0)
-        objective = cp.Maximize(portfolio_return - risk_free_rate)
-        constraints.append(portfolio_variance <= target_vol**2)
-    elif method == "min_vol":
-        objective = cp.Minimize(portfolio_variance)
-    elif method == "equal":
-        return np.repeat(1 / n, n)
-    else:
-        raise ValueError("Unknown optimization method")
+        # Maximize Sharpe ratio => minimize negative Sharpe ratio
+        def neg_sharpe(w):
+            port_return = w @ mu
+            port_vol = np.sqrt(w.T @ Sigma @ w)
+            return - (port_return - risk_free_rate) / port_vol if port_vol != 0 else np.inf
 
-    prob = cp.Problem(objective, constraints)
-    prob.solve()
+        result = minimize(neg_sharpe, x0, bounds=bounds, constraints=[cons])
+        return result.x
 
-    return w.value
+    raise ValueError("Unknown method")
