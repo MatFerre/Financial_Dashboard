@@ -1,3 +1,5 @@
+# Optimizer for portfolio dashboard
+
 import numpy as np
 from scipy.optimize import minimize
 
